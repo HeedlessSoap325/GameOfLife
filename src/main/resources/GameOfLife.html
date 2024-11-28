@@ -9,32 +9,75 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Game of Life Simulation by Mathis Fritz</title>
+    <style>
+        /* Make the canvas fill the screen */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbars */
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        /* Style for buttons */
+        .button {
+            position: fixed; /* Keeps them on top of the canvas */
+            z-index: 10; /* Ensure they are above the canvas */
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #start-button {
+            bottom: 10px;
+            left: 35vw;
+        }
+        #stop-button {
+            bottom: 10px;
+            right: 35vw;
+        }
+    </style>
 </head>
 <body>
-    <canvas width="1080" height="580" id="canvas"></canvas>
+    <canvas  id="canvas"></canvas>
     <br>
-    <button id="start-button" onclick="StartSimulation()" class="btn btn-outline-primary m-1">Start Simulation</button>
-    <button id="stop-button" onclick="StopSimulation()" class="btn btn-outline-primary m-1" disabled>Stop Simulation</button>
+    <button id="start-button" onclick="StartSimulation()" class="btn btn-outline-primary m-1 button">Start Simulation</button>
+    <button id="stop-button" onclick="StopSimulation()" class="btn btn-outline-primary m-1 button" disabled>Stop Simulation</button>
 
     <script>
         //Auf den Canvas zugreifen und auf "2d"-Modus setzen.
         let c = document.getElementById("canvas");
         let ctx = c.getContext("2d");
 
-        let START_BUTTON = document.getElementById("start-button");
-        let STOP_BUTTON = document.getElementById("stop-button");
-
-        //Höhe und breite der Simulation setzen
-        let WIDTH = 540;
-        let HEIGHT = 290;
-
-        //Farben für Lebende und Tote Zellen setzen
-        let CELL_ALIVE_COLOR = "black";
-        let CELL_DEAD_COLOR = "white";
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
 
         //Höhe und breite des Canvas abfragen
         let WIDTH_CANVAS = c.width;
         let HEIGHT_CANVAS = c.height;
+
+        let START_BUTTON = document.getElementById("start-button");
+        let STOP_BUTTON = document.getElementById("stop-button");
+
+        //Höhe und Breite der zellen bestimmen.
+        let DIMENSION_CELL = 2;
+
+        //Höhe und breite der Simulation setzen
+        let WIDTH = Math.floor(WIDTH_CANVAS / DIMENSION_CELL);
+        let HEIGHT =Math.floor(HEIGHT_CANVAS / DIMENSION_CELL);
+
+        //Farben für Lebende und Tote Zellen setzen
+        let CELL_ALIVE_COLOR = "black";
+        let CELL_DEAD_COLOR = "white";
 
         //Zeitintervall, indem sich die Simulation aktualisiert in ms
         let REFRESH_RATE = 225;
@@ -49,7 +92,7 @@
         let GRID = undefined;
 
         //Schreibt bei wichtigen Funktionen eine Log-Message in die Konsole
-        // VERLANGSAMT DIE SIMULATION EXTREM WENN TRUE!
+        //VERLANGSAMT DIE SIMULATION EXTREM WENN TRUE!
         let DEBUG = false;
 
         function StartSimulation() {
