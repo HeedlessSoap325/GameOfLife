@@ -1,5 +1,5 @@
 # About this Project
-This project is meant to show the bauty of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
+This project is meant to show the beauty of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
 It provides both a Web and Console Application.
 
 # Running the Web Application
