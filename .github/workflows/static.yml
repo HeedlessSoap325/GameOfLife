@@ -21,7 +21,7 @@ jobs:
       - name: Create deployment directory
         run: |
           mkdir public
-          cp src/resources/GameOfLife.html public/index.html
+          cp src/main/resources/GameOfLife.html public/index.html
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
