@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Game of Life Simulation by Mathis Fritz</title>
+    <style>
+        /* Make the canvas fill the screen */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbars */
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        /* Style for buttons */
+        .button {
+            position: fixed; /* Keeps them on top of the canvas */
+            z-index: 10; /* Ensure they are above the canvas */
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #start-button {
+            bottom: 10px;
+            left: 35vw;
+        }
+        #stop-button {
+            bottom: 10px;
+            right: 35vw;
+        }
+    </style>
+</head>
+<body>
+    <canvas  id="canvas"></canvas>
+    <br>
+    <button id="start-button" onclick="StartSimulation()" class="btn btn-outline-primary m-1 button">Start Simulation</button>
+    <button id="stop-button" onclick="StopSimulation()" class="btn btn-outline-primary m-1 button" disabled>Stop Simulation</button>
+
+    <script>
+        //Auf den Canvas zugreifen und auf "2d"-Modus setzen.
+        let c = document.getElementById("canvas");
+        let ctx = c.getContext("2d");
+
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+
+        //Höhe und breite des Canvas abfragen
+        let WIDTH_CANVAS = c.width;
+        let HEIGHT_CANVAS = c.height;
+
+        let START_BUTTON = document.getElementById("start-button");
+        let STOP_BUTTON = document.getElementById("stop-button");
+
+        //Höhe und Breite der zellen bestimmen.
+        let DIMENSION_CELL = 2;
+
+        //Höhe und breite der Simulation setzen
+        let WIDTH = Math.floor(WIDTH_CANVAS / DIMENSION_CELL);
+        let HEIGHT =Math.floor(HEIGHT_CANVAS / DIMENSION_CELL);
+
+        //Farben für Lebende und Tote Zellen setzen
+        let CELL_ALIVE_COLOR = "black";
+        let CELL_DEAD_COLOR = "white";
+
+        //Zeitintervall, indem sich die Simulation aktualisiert in ms
+        let REFRESH_RATE = 225;
+
+        //Intervall Id, um den Intervall wieder stoppen zu können
+        let INTERVAL_ID = 0;
+
+        //Prozentrate der lebenden Zellen
+        let PROZENT_LEBENDE_ZELLEN = 0.5;
+
+        //Wird später zu einem zweidimensionalen array, der alle Zellen beinhält
+        let GRID = undefined;
+
+        //Schreibt bei wichtigen Funktionen eine Log-Message in die Konsole
+        //VERLANGSAMT DIE SIMULATION EXTREM WENN TRUE!
+        let DEBUG = false;
+
+        function StartSimulation() {
+            //Startup-Logik
+            if(DEBUG) console.info("Initializing Grid");
+            init_grid();
+
+            if(DEBUG) console.log("Starting Simulation Loop");
+            INTERVAL_ID = setInterval(SimulationLoop, REFRESH_RATE);
+
+            //Toggle Buttons, damit nicht zwei Simulationen gestartet werden können
+            if(DEBUG) console.log("Toggle Buttons");
+            START_BUTTON.setAttribute("disabled", "disabled");
+            STOP_BUTTON.removeAttribute("disabled");
+        }
+
+        function StopSimulation(){
+            //Stop-Logik
+            clearInterval(INTERVAL_ID);
+            if(DEBUG) console.log("Simulation Loop Stopped");
+
+            //Toggle Buttons, damit die Simulation gestoppt werden kann
+            if(DEBUG) console.log("Toggle Buttons");
+            STOP_BUTTON.setAttribute("disabled", "disabled");
+            START_BUTTON.removeAttribute("disabled");
+        }
+
+        function createGrid(width, height){
+            if(DEBUG) console.log("Creating new Grid")
+            //Erstelle einen Array mit height-vielen Zeilen
+            let grid = new Array(height);
+            //Befülle jede Zeile mit einem Array mit width-vielen einträgen
+            for (let i = 0; i < grid.length; i++) {
+                grid[i] = new Array(width);
+            }
+            return grid;
+        }
+
+        function init_grid(){
+            //Array Objekt erstellen und jeden Eintag auf einen zweiten Array setzen ⇒ 2d Array
+            GRID = createGrid(WIDTH, HEIGHT)
+
+            if(DEBUG) console.log("Filling Grid with start Values")
+            //Befüllen des Grids mit zufälligen zuständen (0 oder 1)
+            for (let y = 0; y < HEIGHT; y++){
+                for (let x = 0; x < WIDTH; x++){
+                    //Simuliert einen random Boolean mit einstellbarer Prozentrate
+                    if (Math.random() < PROZENT_LEBENDE_ZELLEN){
+                        GRID[y][x] = 1;
+                    }else{
+                        GRID[y][x] = 0;
+                    }
+                }
+            }
+        }
+
+        function SimulationLoop(){
+            draw_grid();
+            if(DEBUG) console.log("Processing Simulation Frame")
+            let newGrid = createGrid(WIDTH, HEIGHT);
+            for (let y = 0; y < HEIGHT; y++){
+                for (let x = 0; x < WIDTH; x++){
+                    let neighbours = getLivingNeighbours(y, x);
+                    if(DEBUG) console.log("Cell at x: " + x + ", y: " + y + " has " + neighbours + " neighbours")
+
+                    if (GRID[y][x] === 1 && (neighbours < 2 || neighbours > 3)) {
+                        newGrid[y][x] = 0;
+                    }else if (GRID[y][x] === 0 && neighbours === 3) {
+                        newGrid[y][x] = 1;
+                    }else{
+                        newGrid[y][x] = GRID[y][x];
+                    }
+                }
+            }
+            if(DEBUG) console.log("Simulation Frame processed")
+            GRID = newGrid;
+        }
+
+        function getLivingNeighbours(i, j){
+            let neighbours = 0;
+            if(DEBUG) console.log("Processing Neighbours for x: " + j + ", y: " + i)
+            for(let y = Math.max(i - 1, 0); y <= Math.min(i + 1, HEIGHT - 1); y++) {
+                for(let x = Math.max(j - 1, 0); x <= Math.min(j + 1, WIDTH - 1); x++) {
+                    if (GRID[y][x] === 1) neighbours++;
+                }
+            }
+            if (GRID[i][j] === 1) neighbours--;
+            return neighbours;
+        }
+
+        function draw_grid() {
+            if(DEBUG) console.log("Rendering Grid")
+            //Durch jedes einzelne Element des Grids durchgehen
+            for (let y = 0; y < HEIGHT; y++){
+                for (let x = 0; x < WIDTH; x++){
+                    //Zeichnen der korrekten Farbe für tote und lebende Zellen und Error-Handling
+                    if (GRID[y][x] === 1){
+                        drawCell(x, y, CELL_ALIVE_COLOR);
+                    }else if(GRID[y][x] === 0){
+                        drawCell(x, y, CELL_DEAD_COLOR);
+                    }else{
+                        //Error-Handling
+                        StopSimulation();
+                        console.error("An Error Occurred while trying to render the grid on the Canvas, Illegal State: " + GRID[y][x] + " at x: " + x + ", y: " + y);
+                    }
+                }
+            }
+        }
+
+        function drawCell(x, y, color){
+            //Farbe der Zelle setzen
+            ctx.fillStyle = color;
+            //grösse und x bzw. y offset der Zellen berechnen
+            let x_offset = Math.floor(WIDTH_CANVAS / WIDTH);
+            let y_offset = Math.floor(HEIGHT_CANVAS / HEIGHT);
+
+            //Zelle auf den Canvas zeichnen
+            ctx.fillRect(x * x_offset, y * y_offset, x_offset, y_offset);
+        }
+    </script>
+</body>
+</html>
